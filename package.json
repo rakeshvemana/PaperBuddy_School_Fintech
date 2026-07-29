@@ -1,0 +1,21 @@
+{
+  "name": "paperbuddy-school-fintech",
+  "version": "1.0.0",
+  "private": true,
+  "description": "PaperBuddy modern school fee management platform",
+  "scripts": {
+    "dev": "npm run dev --prefix frontend",
+    "dev:api": "npm run dev --prefix backend",
+    "build": "npm run build --prefix frontend && npm run build --prefix backend",
+    "lint": "npm run lint --prefix frontend && npm run lint --prefix backend",
+    "prisma:generate": "npm run prisma:generate --prefix backend"
+  },
+  "workspaces": [
+    "frontend",
+    "backend"
+  ],
+  "overrides": {
+    "postcss": "^8.5.25",
+    "sharp": "^0.35.3"
+  }
+}
