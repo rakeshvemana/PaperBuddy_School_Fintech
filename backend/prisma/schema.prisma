@@ -1,0 +1,219 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  ACCOUNTANT
+  TEACHER
+  PARENT
+  STUDENT
+}
+
+enum PaymentMethod {
+  UPI
+  CASH
+  CHEQUE
+  BANK_TRANSFER
+  ONLINE_GATEWAY
+}
+
+enum PaymentStatus {
+  PENDING
+  PARTIAL
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum ReminderChannel {
+  EMAIL
+  SMS
+  WHATSAPP
+  PUSH
+  IN_APP
+}
+
+model School {
+  id           String        @id @default(cuid())
+  name         String
+  logoUrl      String?
+  academicYear String
+  address      String?
+  createdAt    DateTime      @default(now())
+  users        User[]
+  classes      SchoolClass[]
+  feeHeads     FeeHead[]
+}
+
+model User {
+  id           String   @id @default(cuid())
+  schoolId     String
+  name         String
+  email        String   @unique
+  phone        String?
+  passwordHash String
+  role         Role
+  createdAt    DateTime @default(now())
+  school       School   @relation(fields: [schoolId], references: [id])
+  student      Student?
+}
+
+model SchoolClass {
+  id        String    @id @default(cuid())
+  schoolId  String
+  name      String
+  sections  Section[]
+  school    School    @relation(fields: [schoolId], references: [id])
+}
+
+model Section {
+  id       String      @id @default(cuid())
+  classId  String
+  name     String
+  class    SchoolClass @relation(fields: [classId], references: [id])
+  students Student[]
+}
+
+model Student {
+  id              String        @id @default(cuid())
+  userId          String?       @unique
+  sectionId       String
+  admissionNumber String        @unique
+  rollNumber      String
+  name            String
+  guardianName    String
+  guardianPhone   String
+  email           String?
+  address         String?
+  photoUrl        String?
+  createdAt       DateTime      @default(now())
+  user            User?         @relation(fields: [userId], references: [id])
+  section         Section       @relation(fields: [sectionId], references: [id])
+  documents       Document[]
+  invoices        Invoice[]
+  payments        Payment[]
+  waivers         Waiver[]
+  scholarships    Scholarship[]
+}
+
+model Document {
+  id        String   @id @default(cuid())
+  studentId String
+  name      String
+  url       String
+  createdAt DateTime @default(now())
+  student   Student  @relation(fields: [studentId], references: [id])
+}
+
+model FeeHead {
+  id          String       @id @default(cuid())
+  schoolId    String
+  name        String
+  amount      Int
+  recurring   Boolean      @default(true)
+  school      School       @relation(fields: [schoolId], references: [id])
+  invoiceFees InvoiceFee[]
+}
+
+model Invoice {
+  id           String        @id @default(cuid())
+  studentId    String
+  invoiceNo    String        @unique
+  dueDate      DateTime
+  status       PaymentStatus @default(PENDING)
+  subtotal     Int
+  discount     Int           @default(0)
+  lateFee      Int           @default(0)
+  total        Int
+  createdAt    DateTime      @default(now())
+  student      Student       @relation(fields: [studentId], references: [id])
+  fees         InvoiceFee[]
+  installments Installment[]
+  payments     Payment[]
+  reminders    Reminder[]
+}
+
+model InvoiceFee {
+  id        String  @id @default(cuid())
+  invoiceId String
+  feeHeadId String
+  amount    Int
+  invoice   Invoice @relation(fields: [invoiceId], references: [id])
+  feeHead   FeeHead @relation(fields: [feeHeadId], references: [id])
+}
+
+model Installment {
+  id        String        @id @default(cuid())
+  invoiceId String
+  label     String
+  amount    Int
+  dueDate   DateTime
+  status    PaymentStatus @default(PENDING)
+  invoice   Invoice       @relation(fields: [invoiceId], references: [id])
+}
+
+model Payment {
+  id             String        @id @default(cuid())
+  studentId      String
+  invoiceId      String
+  receiptNo      String        @unique
+  amount         Int
+  method         PaymentMethod
+  status         PaymentStatus @default(PAID)
+  transactionRef String?
+  notes          String?
+  paidAt         DateTime      @default(now())
+  student        Student       @relation(fields: [studentId], references: [id])
+  invoice        Invoice       @relation(fields: [invoiceId], references: [id])
+  receipt        Receipt?
+}
+
+model Receipt {
+  id        String   @id @default(cuid())
+  paymentId String   @unique
+  pdfUrl    String?
+  emailedAt DateTime?
+  payment   Payment  @relation(fields: [paymentId], references: [id])
+}
+
+model Waiver {
+  id        String   @id @default(cuid())
+  studentId String
+  reason    String
+  amount    Int
+  approvedBy String
+  createdAt DateTime @default(now())
+  student   Student  @relation(fields: [studentId], references: [id])
+}
+
+model Scholarship {
+  id        String   @id @default(cuid())
+  studentId String
+  name      String
+  amount    Int
+  createdAt DateTime @default(now())
+  student   Student  @relation(fields: [studentId], references: [id])
+}
+
+model Reminder {
+  id        String          @id @default(cuid())
+  invoiceId String
+  channel   ReminderChannel
+  message   String
+  sentAt    DateTime        @default(now())
+  invoice   Invoice         @relation(fields: [invoiceId], references: [id])
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String?
+  title     String
+  body      String
+  read      Boolean  @default(false)
+  createdAt DateTime @default(now())
+}
