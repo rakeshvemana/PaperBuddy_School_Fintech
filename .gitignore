@@ -11,3 +11,4 @@ Thumbs.db
 prisma/dev.db
 frontend/package-lock.json
 backend/package-lock.json
+frontend/.git-disabled/
